@@ -1,13 +1,8 @@
 from tkinter import *
-from tkinter.filedialog import askopenfilename
 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-
-import sys 
-sys.path.insert(1, 'dsp-modulo')
-from thinkdsp import read_wave
-import numpy
+import pyaudio 
+import numpy as np  
+import wave 
 
 principal = Tk()
 principal.title("Análisis audio")
@@ -22,41 +17,69 @@ strFreqActual.set("")
 strFreq1 = StringVar()
 strFreq1.set("")
 
-strFreq2 = StringVar()
-strFreq2.set("")
-
-strFreq3 = StringVar()
-strFreq3.set("")
-
 strAfi1 = StringVar()
 strAfi1.set("")
 
-strAfi2 = StringVar()
-strAfi2.set("")
+#formato de audio de microfono
+PROFUNDIDAD_BITS = pyaudio.paInt16
+CANALES = 1
+FRECUENCIA_MUESTREO = 44100
 
-strAfi3 = StringVar()
-strAfi3.set("")
+SEGUNDOS_GRABACION = 1
+
+#Tamaño de CHUNK
+CHUNK = 2048
+
+window = np.blackman(CHUNK)
+
+
 
 
 def iniciar():
     Cuerda = "5ta La(A) 110.00 Hz"
     FreqActual = "Frecuencia actual"
-    Freq1 = "79.99 hz"
-    Freq2 = "110.80 hz"
-    Freq3 = "319.01 hz"
     Afi1 = "necesitas apretar la cuerda->"
-    Afi2 = "La afinacion es correcta"
-    Afi3 = "<-necesitas aflojar la cuerda"
 
-    strCuerda.set(Cuerda)
-    strFreqActual.set(FreqActual)
-    strFreq1.set(Freq1)
-    strFreq2.set(Freq2)
-    strFreq3.set(Freq3)
-    strAfi1.set(Afi1)
-    strAfi2.set(Afi2)
-    strAfi3.set(Afi3)
+    def analizar(stream):
+        data = stream.read(CHUNK, exception_on_overflow=False)
+        #"2048h"
+        waveData = wave.struct.unpack("%dh"%(CHUNK), data)
+        npData = np.array(waveData)
 
+        dataEntrada = npData * window
+
+        fftData = np.abs(np.fft.rfft(dataEntrada))
+
+        indiceFrecuenciaDominante = fftData[1:].argmax() + 1
+
+        #Cambio de indice Hz
+        y0,y1,y2 = np.log(fftData[indiceFrecuenciaDominante-1:indiceFrecuenciaDominante+2])
+        x1 = (y2-y0) * 0.5 / (2 * y1 - y2 - y0)
+        frecuenciaDominante = (indiceFrecuenciaDominante+x1) * FRECUENCIA_MUESTREO / CHUNK
+        Freq1 = str(frecuenciaDominante)
+
+        
+
+
+        strCuerda.set(Cuerda)
+        strFreqActual.set(FreqActual)
+        strFreq1.set(Freq1)
+        strAfi1.set(Afi1)
+
+        print("Frecuencia Dominante: " + str(frecuenciaDominante) + " Hz", end='\r')
+
+    if __name__ == "__main__":
+        p = pyaudio.PyAudio()
+        stream = p.open(format=PROFUNDIDAD_BITS, channels=CANALES, rate=FRECUENCIA_MUESTREO, input=True, frames_per_buffer=CHUNK)
+        
+        for i in range(0, int(FRECUENCIA_MUESTREO * SEGUNDOS_GRABACION / CHUNK)):
+            analizar(stream)
+        
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+    
 
 
 strSecuencia = StringVar()
@@ -77,30 +100,4 @@ lblFreq1.pack()
 lblAfi1 = Label(principal, textvariable = strAfi1)
 lblAfi1.pack()
 
-
-lblcuerda = Label(principal, textvariable = strCuerda)
-lblcuerda.pack()
-
-lblFreqActual = Label(principal, textvariable = strFreqActual)
-lblFreqActual.pack()
-
-lblFreq2 = Label(principal, textvariable = strFreq2)
-lblFreq2.pack()
-
-lblAfi2 = Label(principal, textvariable = strAfi2)
-lblAfi2.pack()
-
-
-lblcuerda = Label(principal, textvariable = strCuerda)
-lblcuerda.pack()
-
-lblFreqActual = Label(principal, textvariable = strFreqActual)
-lblFreqActual.pack()
-
-lblFreq3 = Label(principal, textvariable = strFreq3)
-lblFreq3.pack()
-
-lblAfi3 = Label(principal, textvariable = strAfi3)
-lblAfi3.pack()
-
-mainloop()
+principal.mainloop()

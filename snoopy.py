@@ -8,6 +8,9 @@ principal = Tk()
 principal.title("Afinador de Guitarra")
 principal.geometry("350x300")
 
+strCuerdaCercana = StringVar()
+strCuerdaCercana.set("")
+
 strCuerda = StringVar()
 strCuerda.set("")
 
@@ -25,7 +28,7 @@ PROFUNDIDAD_BITS = pyaudio.paInt16
 CANALES = 1
 FRECUENCIA_MUESTREO = 44100
 
-SEGUNDOS_GRABACION = 1
+SEGUNDOS_GRABACION = 2
 
 #Tamaño de CHUNK
 CHUNK = 2048
@@ -33,7 +36,8 @@ CHUNK = 2048
 window = np.blackman(CHUNK)
 
 def iniciar():
-    FreqActual = "Frecuencia actual"
+    CuerdaCercana = "La cuerda más cercana a la frecuencia que tocaste fue:"
+    FreqActual = "La frecuencia actual es:"
 
     def analizar(stream):
         data = stream.read(CHUNK, exception_on_overflow=False)
@@ -55,12 +59,10 @@ def iniciar():
         print("Frecuencia Dominante: " + str(frecuenciaDominante) + " Hz", end='\r')
         strFrecuencia.set(Frecuencia)
 
-        #frecuenciasLetrasDTMF = [82.4, 110.0, 146.83, 196.0, 246.94, 329.63]
-
-        tolerancia = 13.0
+        toleranciaCuerda = 13.0
         toleranciaAfi = 1.3
         
-        if  frecuenciaDominante > 82.4 - tolerancia and frecuenciaDominante < 82.4 + tolerancia :
+        if  frecuenciaDominante > 82.4 - toleranciaCuerda and frecuenciaDominante < 82.4 + toleranciaCuerda :
             Cuerda = "6ta Mi(E) 82.4 Hz"
             if  frecuenciaDominante > 82.4 - toleranciaAfi and frecuenciaDominante < 82.4 + toleranciaAfi :
                 Afinacion = "La Afinacion es correcta"
@@ -68,7 +70,7 @@ def iniciar():
                 Afinacion = "Es necesario apretar la cuerda"
             else:
                 Afinacion = "Es necesario aflojar la cuerda"
-        elif  frecuenciaDominante > 110.0 - tolerancia and frecuenciaDominante < 110.0 + tolerancia :
+        elif  frecuenciaDominante > 110.0 - toleranciaCuerda and frecuenciaDominante < 110.0 + toleranciaCuerda :
             Cuerda = "5ta La(A) 110.00 Hz"
             if  frecuenciaDominante > 110.0 - toleranciaAfi and frecuenciaDominante < 110.0 + toleranciaAfi :
                 Afinacion = "La Afinacion es correcta"
@@ -76,7 +78,7 @@ def iniciar():
                 Afinacion = "Es necesario apretar la cuerda"
             else:
                 Afinacion = "Es necesario aflojar la cuerda"
-        elif  frecuenciaDominante > 146.83 - tolerancia and frecuenciaDominante < 146.83 + tolerancia :
+        elif  frecuenciaDominante > 146.83 - toleranciaCuerda and frecuenciaDominante < 146.83 + toleranciaCuerda :
             Cuerda = "4ta Re(D) 146.83 Hz"
             if  frecuenciaDominante > 146.83 - toleranciaAfi and frecuenciaDominante < 146.83 + toleranciaAfi :
                 Afinacion = "La Afinacion es correcta"
@@ -84,7 +86,7 @@ def iniciar():
                 Afinacion = "Es necesario apretar la cuerda"
             else:
                 Afinacion = "Es necesario aflojar la cuerda"
-        elif  frecuenciaDominante > 196.0 - tolerancia and frecuenciaDominante < 196.0 + tolerancia :
+        elif  frecuenciaDominante > 196.0 - toleranciaCuerda and frecuenciaDominante < 196.0 + toleranciaCuerda :
             Cuerda = "3ra Sol(G) 196.0 Hz"
             if  frecuenciaDominante > 196.0 - toleranciaAfi and frecuenciaDominante < 196.0 + toleranciaAfi :
                 Afinacion = "La Afinacion es correcta"
@@ -92,7 +94,7 @@ def iniciar():
                 Afinacion = "Es necesario apretar la cuerda"
             else:
                 Afinacion = "Es necesario aflojar la cuerda"
-        elif  frecuenciaDominante > 246.94 - tolerancia and frecuenciaDominante < 246.94 + tolerancia :
+        elif  frecuenciaDominante > 246.94 - toleranciaCuerda and frecuenciaDominante < 246.94 + toleranciaCuerda :
             Cuerda = "2da Si(B) 246.94 Hz"
             if  frecuenciaDominante > 246.94 - toleranciaAfi and frecuenciaDominante < 246.94 + toleranciaAfi :
                 Afinacion = "La Afinacion es correcta"
@@ -100,7 +102,7 @@ def iniciar():
                 Afinacion = "Es necesario apretar la cuerda"
             else:
                 Afinacion = "Es necesario aflojar la cuerda"
-        elif  frecuenciaDominante > 329.63 - tolerancia and frecuenciaDominante < 329.63 + tolerancia :
+        elif  frecuenciaDominante > 329.63 - toleranciaCuerda and frecuenciaDominante < 329.63 + toleranciaCuerda :
             Cuerda = "1ra Mi(E2) 329.63 Hz"
             if  frecuenciaDominante > 329.63- toleranciaAfi and frecuenciaDominante < 329.63 + toleranciaAfi :
                 Afinacion = "La Afinacion es correcta"
@@ -112,7 +114,7 @@ def iniciar():
             Cuerda = "Cuerda no identificada"
             Afinacion = "Presione el botón 'Iniciar' otra vez"
 
-        
+        strCuerdaCercana.set(CuerdaCercana)
         strCuerda.set(Cuerda)
         strFreqActual.set(FreqActual)
         strAfinacion.set(Afinacion)
@@ -128,11 +130,13 @@ def iniciar():
         stream.close()
         p.terminate()
 
-strSecuencia = StringVar()
-strSecuencia.set("Número contenido en el audio")
+    
 
 btnIniciar = Button(principal, text = "Iniciar", command = iniciar) 
 btnIniciar.pack()
+
+lblCuerdaCercana = Label(principal, textvariable = strCuerdaCercana)
+lblCuerdaCercana.pack()
 
 lblcuerda = Label(principal, textvariable = strCuerda)
 lblcuerda.pack()
